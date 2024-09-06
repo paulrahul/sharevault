@@ -86,6 +86,12 @@
                 width: 40px;  /* Narrow column for icons */
                 text-align: center;
             }
+            .busy-sign {
+                text-align: center;
+                font-size: 18px;
+                font-weight: bold;
+                margin-top: 10px;
+            }            
             /* Responsive Design */
             @media (max-width: 600px) {
                 .container {
@@ -109,6 +115,8 @@
             <button onclick="uploadFile()">Upload</button>
         </div>
     
+        <div id="busySign" class="busy-sign" style="display: none;">Loading...</div>
+
         <table id="linksTable" style="display: none;">
             <thead>
                 <tr>
@@ -127,11 +135,15 @@
         function uploadFile() {
             const fileInput = document.getElementById('fileInput');
             const file = fileInput.files[0];
+            const busySign = document.getElementById('busySign');
             
             if (!file) {
                 alert('Please select a file to upload');
                 return;
             }
+
+            // Show the busy sign
+            busySign.style.display = 'block';
     
             const formData = new FormData();
             formData.append('file', file);
@@ -142,13 +154,20 @@
             })
             .then(response => response.json())
             .then(data => {
+                // Hide the busy sign when done
+                busySign.style.display = 'none';
+
                 if (data.file_contents) {
                     displayLinks(data.file_contents);
                 } else {
                     alert('No links found in the uploaded file');
                 }
             })
-            .catch(error => console.error('Error:', error));
+            .catch(error => {
+                // Hide the busy sign if there's an error
+                busySign.style.display = 'none';
+                console.error('Error:', error);
+            });
         }
     
         function displayLinks(file_contents) {
@@ -169,9 +188,17 @@
                 row.appendChild(iconCell);
                 
                 var textContent = link.url;
-                if ("type" in link && link.type == "track") {
-                    textContent = link.name + " - " + link.artists;
-                }
+                if ("type" in link) {
+                    if (link.type == "track") {
+                        textContent = link.name + " - " + link.artists;
+                    } else if (link.type == "playlist") {
+                        textContent = "[Playlist] " + link.name;
+                    } else if (link.type == "artist") {
+                        textContent = "[Artist] " + link.name;
+                    } else if (link.type == "album") {
+                        textContent = "[Album] " + link.name + " - " + link.artists;
+                    }
+                } 
 
                 // Link column
                 const linkCell = document.createElement('td');

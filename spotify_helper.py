@@ -1,3 +1,4 @@
+import concurrent.futures
 import os
 import re
 
@@ -112,7 +113,27 @@ class SpotifyAPIHelper:
  
         return ret
 
-                
+    def _parallel_get_data(self, track_ids, album_ids, playlist_ids, artist_ids):
+        # Create a ThreadPoolExecutor to manage threads
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            # Submit all four tasks to the executor
+            future_tracks = executor.submit(self._get_tracks, track_ids)
+            future_albums = executor.submit(self._get_albums, album_ids)
+            future_playlists = executor.submit(self._get_playlists, playlist_ids)
+            future_artists = executor.submit(self._get_artists, artist_ids)
+            
+            # Wait for all the futures to complete and collect the results
+            ret = {}
+            
+            # Combine the results into the ret dictionary
+            ret.update(future_tracks.result())
+            ret.update(future_albums.result())
+            ret.update(future_playlists.result())
+            ret.update(future_artists.result())
+            
+        # Return the combined result
+        return ret
+      
     def analyse_spotify(self, links):
         # For each Spotify link, get ID and link type.
         spotify_bits = self._extract_spotify_url_bits(links)
@@ -137,13 +158,7 @@ class SpotifyAPIHelper:
             else:
                 print(f"Unknown type: {type}")
         
-        ret = {}
-        
-        ret = {**ret, **self._get_tracks(track_ids)}
-        ret = {**ret, **self._get_albums(album_ids)}
-        ret = {**ret, **self._get_playlists(playlist_ids)}
-        ret = {**ret, **self._get_artists(artist_ids)}
-        
-        return ret
+        return self._parallel_get_data(
+            track_ids, album_ids, playlist_ids, artist_ids)
                 
             
