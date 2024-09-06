@@ -32,7 +32,87 @@ class SpotifyAPIHelper:
                 print(f"Could not parse Spotify URL: {url}")
                 
         return ret
+    
+    def _get_tracks(self, track_ids):
+        ret = {}
+        
+        if len(track_ids) > 0:
+            tracks = self._sp.tracks(list(track_ids.keys()))
+            for track in tracks["tracks"]:
+                track_name = track["name"]
+                artists = ", ".join([a["name"] for a in track["artists"]])
+                
+                link_url = track_ids[track["id"]]
+                ret[link_url] = {
+                    "name": track_name, 
+                    "artists": artists,
+                    "type": "track"
+                }
+                
+                images = track["album"]["images"]
+                if len(images) > 0:
+                    ret[link_url]["image_url"] = images[0]["url"]
 
+        return ret
+    
+    def _get_playlists(self, playlist_ids):
+        ret = {}
+        
+        for playlist_id in playlist_ids:
+            playlist = self._sp.playlist(playlist_id)
+            
+            link_url = playlist_ids[playlist_id]
+            ret[link_url] = {
+                "name": playlist["name"], 
+                "type": "playlist"
+            }
+            
+            if len(playlist["images"]) > 0:
+                ret[link_url]["image_url"] = playlist["images"][0]["url"]
+        
+        return ret
+    
+    def _get_albums(self, album_ids):
+        ret = {}
+
+        if len(album_ids) > 0:
+            albums = self._sp.albums(list(album_ids.keys()))
+            for album in albums["albums"]:
+                album_name = album["name"]
+                artists = ", ".join([a["name"] for a in album["artists"]])
+                
+                link_url = album_ids[album["id"]]
+                ret[link_url] = {
+                    "name": album_name, 
+                    "artists": artists,
+                    "type": "album"
+                }
+                
+                if len(album["images"]) > 0:
+                    ret[link_url]["image_url"] = album["images"][0]["url"]
+ 
+        return ret
+
+    def _get_artists(self, artist_ids):
+        ret = {}
+
+        if len(artist_ids) > 0:
+            artists = self._sp.artists(list(artist_ids.keys()))
+            for artist in artists["artists"]:
+                artist_name = artist["name"]
+                
+                link_url = artist_ids[artist["id"]]
+                ret[link_url] = {
+                    "name": artist_name, 
+                    "type": "artist"
+                }
+                
+                if len(artist["images"]) > 0:
+                    ret[link_url]["image_url"] = artist["images"][0]["url"]
+ 
+        return ret
+
+                
     def analyse_spotify(self, links):
         # For each Spotify link, get ID and link type.
         spotify_bits = self._extract_spotify_url_bits(links)
@@ -59,16 +139,10 @@ class SpotifyAPIHelper:
         
         ret = {}
         
-        if len(track_ids) > 0:
-            tracks = self._sp.tracks(list(track_ids.keys()))
-            for track in tracks["tracks"]:
-                track_name = track["name"]
-                artists = ", ".join([a["name"] for a in track["artists"]])
-                ret[track_ids[track["id"]]] = {
-                    "name": track_name, 
-                    "artists": artists,
-                    "type": "track"
-                }
+        ret = {**ret, **self._get_tracks(track_ids)}
+        ret = {**ret, **self._get_albums(album_ids)}
+        ret = {**ret, **self._get_playlists(playlist_ids)}
+        ret = {**ret, **self._get_artists(artist_ids)}
         
         return ret
                 
