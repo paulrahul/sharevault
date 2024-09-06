@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 
 from .links_helper import analyse_chat
 
-UPLOAD_FOLDER = 'uploads/'
+UPLOAD_FOLDER = '/tmp'
 FILE_NAME = "sharevault.txt"
 ALLOWED_EXTENSIONS = {'txt'}
 

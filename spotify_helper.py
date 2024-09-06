@@ -5,11 +5,31 @@ import re
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 
+SPOTIFY_USER_ID = os.environ["SPOTIFY_USER_ID"]
+
 class SpotifyAPIHelper:
     def __init__(self):
         self._auth_manager = SpotifyClientCredentials()
         self._sp = spotipy.Spotify(auth_manager=self._auth_manager)
 
+    def _playlist_exists(self, name):
+        playlists = self._sp.user_playlists(SPOTIFY_USER_ID)
+        for p in playlists["items"]:
+            if p["name"] == name:
+                return p["id"]
+
+        return None
+    
+    def _create_playlist(self, name):
+        playlist = self._sp.user_playlist_create(SPOTIFY_USER_ID, name)
+        return playlist["id"]
+    
+    def update_playlist(self, name, track_uris):
+        playlist_id = self._playlist_exists(name)
+        if not playlist_id:
+            playlist_id = self._create_playlist(name)
+            
+        self._sp.playlist_add_items(playlist_id, track_uris)
 
     def _extract_spotify_url_bits(self, links):
         # Regular expression to explicitly match URLs starting with 'https://open.spotify.com/'

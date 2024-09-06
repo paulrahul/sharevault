@@ -9,6 +9,10 @@ from youtube_helper import analyse_youtube
 
 import re
 
+SWEATING_PLAYLIST_NAME = "Sweating"
+
+PROD_MODE = os.environ.get("SHAREVAULT_MODE")
+
 def _extract_each_message(text):
     # Regex pattern to match the timestamp format
     timestamp_pattern = r'\[\d{2}[./]\d{2}[./]\d{2}, \d{1,2}:\d{2}:\d{2} (?:AM|PM)\]'
@@ -118,16 +122,23 @@ def _read_file(filename):
     with open(filename, "r") as file:
         return file.read()
 
-def analyse_chat(filename, expand_spotify=True, expand_youtube=True):
+def analyse_chat(filename, expand_spotify=True, expand_youtube=True, update_sweating=False):    
     chat_text = _read_file(filename)
+    if PROD_MODE and PROD_MODE == "PROD":
+        os.remove(filename)
+
     messages = _extract_each_message(chat_text)
     all_links = _extract_links(messages)
-    
+
     if expand_spotify:
         o = SpotifyAPIHelper()
         spotify_info = o.analyse_spotify(all_links.keys())
         for id in spotify_info:
             all_links[id] = {**all_links[id], **spotify_info[id]}
+
+        if update_sweating:
+            track_uris = [link["url"] for link in all_links if link["type"] == "track"]
+            o.update_playlist(SWEATING_PLAYLIST_NAME, track_uris)    
             
     if expand_youtube:
         youtube_info = analyse_youtube(all_links.keys())
@@ -142,5 +153,5 @@ def analyse_chat(filename, expand_spotify=True, expand_youtube=True):
         
     return ret
     
-if __name__ == "__main__":
-    print(analyse_chat("uploads/sharevault.txt"))
+if __name__ == "__main__":    
+    print(analyse_chat("/tmp/sharevault.txt"))
