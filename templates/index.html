@@ -208,6 +208,8 @@
                         textContent = "[Artist] " + link.name;
                     } else if (link.type == "album") {
                         textContent = "[Album] " + link.name + " - " + link.artists;
+                    } else if (link.type == "video") {
+                        textContent = "[Video] " + link.name;
                     }
                 } 
 
@@ -246,7 +248,7 @@
             } else if (link.includes('youtube.com')) {
                 return 'https://img.icons8.com/fluent/48/000000/youtube-play.png';
             } else if (link.includes('maps.google.com')) {
-                return 'https://img.icons8.com/fluent/48/000000/google-maps.png';
+                return 'https://img.icons8.com/color/48/000000/google-maps.png';
             } else {
                 return 'https://img.icons8.com/fluent/48/000000/link.png'; // Generic link icon
             }

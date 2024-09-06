@@ -5,6 +5,7 @@ sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 import re
 
 from spotify_helper import SpotifyAPIHelper
+from youtube_helper import analyse_youtube
 
 import re
 
@@ -117,7 +118,7 @@ def _read_file(filename):
     with open(filename, "r") as file:
         return file.read()
 
-def analyse_chat(filename, expand_spotify=True):
+def analyse_chat(filename, expand_spotify=True, expand_youtube=True):
     chat_text = _read_file(filename)
     messages = _extract_each_message(chat_text)
     all_links = _extract_links(messages)
@@ -127,6 +128,11 @@ def analyse_chat(filename, expand_spotify=True):
         spotify_info = o.analyse_spotify(all_links.keys())
         for id in spotify_info:
             all_links[id] = {**all_links[id], **spotify_info[id]}
+            
+    if expand_youtube:
+        youtube_info = analyse_youtube(all_links.keys())
+        for id in youtube_info:
+            all_links[id] = {**all_links[id], **youtube_info[id]}
         
     ret = []
     for url in all_links:

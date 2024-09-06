@@ -5,8 +5,6 @@ import re
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 
-user_id = os.environ['SPOTIFY_USER_ID']
-
 class SpotifyAPIHelper:
     def __init__(self):
         self._auth_manager = SpotifyClientCredentials()
