@@ -1,0 +1,219 @@
+{% extends "layout.html" %}
+{% block body %}
+    <!--title>Upload new File</title>
+    <h1>Upload new File</h1>
+    <form method=post enctype=multipart/form-data action="/upload">
+      <input type=file name=file>
+      <input type=submit value=Upload>
+    </form-->
+
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Share Vault</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 20px;
+                background-color: #f4f4f9;
+            }
+            .container {
+                max-width: 600px;
+                margin: 0 auto;
+                background-color: white;
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+            }
+            h2 {
+                text-align: center;
+                margin-bottom: 20px;
+            }
+            .upload-form {
+                text-align: center;
+                margin-bottom: 30px;
+            }
+            input[type="file"] {
+                padding: 10px;
+                margin: 10px 0;
+            }
+            button {
+                padding: 10px 20px;
+                background-color: #007bff;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+            }
+            button:hover {
+                background-color: #0056b3;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+                word-wrap: break-word;
+                table-layout: fixed;
+                font-size: small;
+            }
+            th, td {
+                text-align: left;
+                padding: 12px;
+                border-bottom: 1px solid #ddd;
+            }
+            th {
+                background-color: #007bff;
+                color: white;
+            }
+            td a {
+                color: #007bff;
+                text-decoration: none;
+                word-wrap: break-word;
+                font-size: smaller;
+            }
+            td a:hover {
+                text-decoration: underline;
+            }
+            .icon {
+                width: 24px;
+                height: 24px;
+            }
+            .icon-column {
+                width: 40px;  /* Narrow column for icons */
+                text-align: center;
+            }
+            /* Responsive Design */
+            @media (max-width: 600px) {
+                .container {
+                    padding: 10px;
+                }
+                th, td {
+                    padding: 8px;
+                }
+                .icon-column {
+                    width: 30px;  /* Adjust for smaller screens */
+                }
+            }
+        </style>
+    </head>
+    <body>
+    
+    <div class="container">
+        <h2>Share Vault</h2>
+        <div class="upload-form">
+            <input type="file" id="fileInput" accept=".txt">
+            <button onclick="uploadFile()">Upload</button>
+        </div>
+    
+        <table id="linksTable" style="display: none;">
+            <thead>
+                <tr>
+                    <th class="icon-column">Icon</th>
+                    <th>Link</th>
+                    <th>From</th>
+                    <th>At</th>
+                </tr>
+            </thead>
+            <tbody id="linksTableBody">
+            </tbody>
+        </table>
+    </div>
+    
+    <script>
+        function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select a file to upload');
+                return;
+            }
+    
+            const formData = new FormData();
+            formData.append('file', file);
+    
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.file_contents) {
+                    displayLinks(data.file_contents);
+                } else {
+                    alert('No links found in the uploaded file');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    
+        function displayLinks(file_contents) {
+            const linksTable = document.getElementById('linksTable');
+            const linksTableBody = document.getElementById('linksTableBody');
+            linksTableBody.innerHTML = '';  // Clear any existing rows
+    
+            file_contents.forEach(link => {
+                const row = document.createElement('tr');
+                
+                // Icon column
+                const iconCell = document.createElement('td');
+                iconCell.className = 'icon-column';
+                const icon = document.createElement('img');
+                icon.className = 'icon';
+                icon.src = getIconForLink(link.url);
+                iconCell.appendChild(icon);
+                row.appendChild(iconCell);
+                
+                var textContent = link.url;
+                if ("type" in link && link.type == "track") {
+                    textContent = link.name + " - " + link.artists;
+                }
+
+                // Link column
+                const linkCell = document.createElement('td');
+                const anchor = document.createElement('a');
+                anchor.href = link.url;
+                anchor.target = '_blank';
+                anchor.textContent = textContent;
+                linkCell.appendChild(anchor);
+                row.appendChild(linkCell);
+
+                // From column
+                const fromCell = document.createElement('td');
+                fromCell.textContent = link.user;
+                row.appendChild(fromCell);
+                
+                // At column
+                const atCell = document.createElement('td');
+                atCell.textContent = link.timestamp;
+                row.appendChild(atCell);                
+
+                linksTableBody.appendChild(row);
+            });
+    
+            linksTable.style.display = 'table';
+        }
+    
+        function getIconForLink(link) {
+            if (link.includes('instagram.com')) {
+                return 'https://img.icons8.com/fluent/48/000000/instagram-new.png';
+            } else if (link.includes('spotify.com')) {
+                return 'https://img.icons8.com/fluent/48/000000/spotify.png';
+            } else if (link.includes('youtube.com')) {
+                return 'https://img.icons8.com/fluent/48/000000/youtube-play.png';
+            } else if (link.includes('maps.google.com')) {
+                return 'https://img.icons8.com/fluent/48/000000/google-maps.png';
+            } else {
+                return 'https://img.icons8.com/fluent/48/000000/link.png'; // Generic link icon
+            }
+        }
+    </script>
+    
+    </body>
+    </html>
+            
+{% endblock %}
