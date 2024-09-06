@@ -94,6 +94,9 @@
             white-space: nowrap; /* Prevent wrapping for From and At columns */
             font-size: smaller; /* Set font size smaller for From and At columns */
         }
+        .from-column small, .at-column small {
+            font-size: smaller; /* Ensure smaller font size */
+        }
         .busy-sign {
             text-align: center;
             font-size: 18px;
@@ -138,7 +141,7 @@
         </tbody>
     </table>
 </div>
-    
+
     <script>
         function uploadFile() {
             const fileInput = document.getElementById('fileInput');
@@ -219,12 +222,14 @@
 
                 // From column
                 const fromCell = document.createElement('td');
-                fromCell.textContent = link.user;
+                // fromCell.textContent = link.user;
+                fromCell.innerHTML = `<small>${link.user}</small>`;
                 row.appendChild(fromCell);
                 
                 // At column
                 const atCell = document.createElement('td');
-                atCell.textContent = link.timestamp;
+                // atCell.textContent = link.timestamp;
+                atCell.innerHTML = `<small>${link.timestamp}</small>`;
                 row.appendChild(atCell);                
 
                 linksTableBody.appendChild(row);
