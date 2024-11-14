@@ -99,7 +99,7 @@ def _extract_links(messages):
             user = match[0][0:match[0].index(":")] if match[0].find(":") >= 0 else match[0]
             user = user.split()[0]
             
-            url = match[2]
+            url = match[2][0:match[2].index("?")] if match[2].find("?") >= 0 else match[2]
             
             links_with_timestamps[url] = {"user": user, "timestamp": timestamp}
 
@@ -137,14 +137,21 @@ def analyse_chat(filename, expand_spotify=True, expand_youtube=True, update_swea
             all_links[id] = {**all_links[id], **spotify_info[id]}
 
         if update_sweating:
-            track_uris = [link["url"] for link in all_links if link["type"] == "track"]
+            track_uris = [url for url, link in all_links.items() if link.get("type") == "track"]
             o.update_playlist(SWEATING_PLAYLIST_NAME, track_uris)    
             
     if expand_youtube:
         youtube_info = analyse_youtube(all_links.keys())
+        
+        spotify_track_uris = []
         for id in youtube_info:
             all_links[id] = {**all_links[id], **youtube_info[id]}
-        
+            spotify_track_uri = o.search_track(youtube_info[id]["name"])
+            if spotify_track_uri:
+                spotify_track_uris.append(spotify_track_uri)
+        if update_sweating:
+            o.update_playlist(SWEATING_PLAYLIST_NAME, spotify_track_uris)    
+                    
     ret = []
     for url in all_links:
         new_link_obj = all_links[url]

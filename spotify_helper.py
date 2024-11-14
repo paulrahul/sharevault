@@ -3,14 +3,18 @@ import os
 import re
 
 import spotipy
-from spotipy.oauth2 import SpotifyClientCredentials
+from spotipy.oauth2 import SpotifyOAuth, SpotifyClientCredentials
 
 SPOTIFY_USER_ID = os.environ["SPOTIFY_USER_ID"]
 
+SPOTIFY_SCOPE = "user-library-read playlist-modify-public"
+
 class SpotifyAPIHelper:
     def __init__(self):
-        self._auth_manager = SpotifyClientCredentials()
-        self._sp = spotipy.Spotify(auth_manager=self._auth_manager)
+        # self._auth_manager = SpotifyClientCredentials()
+        # self._sp = spotipy.Spotify(auth_manager=self._auth_manager)
+        
+        self._sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=SPOTIFY_SCOPE))
 
     def _playlist_exists(self, name):
         playlists = self._sp.user_playlists(SPOTIFY_USER_ID)
@@ -20,16 +24,37 @@ class SpotifyAPIHelper:
 
         return None
     
+    def search_track(self, name):
+        q = f"track:{name}"
+        results = self._sp.search(q)
+        
+        if "tracks" in results and len(results["tracks"]["items"]) > 0:
+            return results["tracks"]["items"][0]["external_urls"]["spotify"]
+        else:
+            return None
+     
     def _create_playlist(self, name):
         playlist = self._sp.user_playlist_create(SPOTIFY_USER_ID, name)
         return playlist["id"]
     
     def update_playlist(self, name, track_uris):
         playlist_id = self._playlist_exists(name)
+        existing_tracks = set()
         if not playlist_id:
+            print(f"Creating playlist {name}")
             playlist_id = self._create_playlist(name)
+        else:
+            playlist_items = self._sp.playlist_tracks(playlist_id)
+            for item in playlist_items["items"]:
+                existing_tracks.add(item["track"]["external_urls"]["spotify"])
+    
+        # print(f"Tracks to be added: {track_uris}\n\n")
+        # print(f"Existing tracks: {existing_tracks}\n\n")
+        new_tracks = set(track_uris) - existing_tracks
             
-        self._sp.playlist_add_items(playlist_id, track_uris)
+        if len(new_tracks) > 0:
+            print(f"Adding tracks {new_tracks} to playlist {playlist_id}")
+            self._sp.playlist_add_items(playlist_id, new_tracks)
 
     def _extract_spotify_url_bits(self, links):
         # Regular expression to explicitly match URLs starting with 'https://open.spotify.com/'
