@@ -9,6 +9,14 @@ SPOTIFY_USER_ID = os.environ["SPOTIFY_USER_ID"]
 
 SPOTIFY_SCOPE = "user-library-read playlist-modify-public"
 
+# Spotify API limit for track IDs per request
+MAX_IDS_PER_REQUEST = 50
+
+def chunk_list(lst, chunk_size):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), chunk_size):
+        yield lst[i:i + chunk_size]
+
 class SpotifyAPIHelper:
     def __init__(self):
         # self._auth_manager = SpotifyClientCredentials()
@@ -80,22 +88,23 @@ class SpotifyAPIHelper:
     def _get_tracks(self, track_ids):
         ret = {}
         
-        if len(track_ids) > 0:
-            tracks = self._sp.tracks(list(track_ids.keys()))
-            for track in tracks["tracks"]:
-                track_name = track["name"]
-                artists = ", ".join([a["name"] for a in track["artists"]])
-                
-                link_url = track_ids[track["id"]]
-                ret[link_url] = {
-                    "name": track_name, 
-                    "artists": artists,
-                    "type": "track"
-                }
-                
-                images = track["album"]["images"]
-                if len(images) > 0:
-                    ret[link_url]["image_url"] = images[0]["url"]
+        if len(track_ids) > 0:            
+            for chunk in chunk_list(list(track_ids.keys()), MAX_IDS_PER_REQUEST):    
+                tracks = self._sp.tracks(chunk)
+                for track in tracks["tracks"]:
+                    track_name = track["name"]
+                    artists = ", ".join([a["name"] for a in track["artists"]])
+                    
+                    link_url = track_ids[track["id"]]
+                    ret[link_url] = {
+                        "name": track_name, 
+                        "artists": artists,
+                        "type": "track"
+                    }
+                    
+                    images = track["album"]["images"]
+                    if len(images) > 0:
+                        ret[link_url]["image_url"] = images[0]["url"]
 
         return ret
     

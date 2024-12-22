@@ -246,14 +246,30 @@
                     } else if (link.type == "video") {
                         textContent = "[Video] " + link.name;
                     }
-                } 
+                }
 
                 // Link column
                 const linkCell = document.createElement('td');
+
                 const anchor = document.createElement('a');
                 anchor.href = link.url;
                 anchor.target = '_blank';
                 anchor.textContent = textContent;
+
+                // Apply styles to the table cell to enable text wrapping
+                linkCell.style.wordWrap = 'break-word';
+                linkCell.style.whiteSpace = 'normal';                
+
+                if ("image_url" in link) {
+                    const thumbnail = document.createElement('img');
+                    thumbnail.src = link.image_url;
+                    thumbnail.style.display = "block"
+                    thumbnail.style.width= "30%"
+                    thumbnail.style.height= "20%"
+                    linkCell.appendChild(thumbnail);
+                    linkCell.appendChild(document.createElement('br'))
+                }
+
                 linkCell.appendChild(anchor);
                 row.appendChild(linkCell);
 
@@ -280,7 +296,7 @@
                 return 'https://img.icons8.com/fluent/48/000000/instagram-new.png';
             } else if (link.includes('spotify.com')) {
                 return 'https://img.icons8.com/fluent/48/000000/spotify.png';
-            } else if (link.includes('youtube.com')) {
+            } else if (link.includes('youtu')) {
                 return 'https://img.icons8.com/fluent/48/000000/youtube-play.png';
             } else if (link.includes('maps.google.com')) {
                 return 'https://img.icons8.com/color/48/000000/google-maps.png';
