@@ -112,7 +112,11 @@ class SpotifyAPIHelper:
         ret = {}
         
         for playlist_id in playlist_ids:
-            playlist = self._sp.playlist(playlist_id)
+            try:
+                playlist = self._sp.playlist(playlist_id)
+            except spotipy.SpotifyException as e:
+                print(f"Could not find playlist {playlist_id}")
+                continue
             
             link_url = playlist_ids[playlist_id]
             ret[link_url] = {
