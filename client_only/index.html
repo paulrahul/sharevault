@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Share Vault</title>
+    <!--script src="links_helper.js"></script--> <!-- Include the JavaScript file -->
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            text-align: center;
+        }
+        .container a {
+            display: inline-block; /* Necessary to apply margin auto for vertical centering */
+            margin: 0 auto; /* Center horizontally */
+            text-decoration: none; /* Optional: Remove underline for better visual */
+        }
+        
+        .container a:hover {
+            text-decoration: underline; /* Optional: Restore underline on hover */
+        }
+        
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .upload-form {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        input[type="file"] {
+            padding: 10px;
+            margin: 10px 0;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            word-wrap: break-word;
+            table-layout: fixed;
+            font-size: small;
+        }
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+        td a {
+            color: #007bff;
+            text-decoration: none;
+            word-wrap: break-word;
+            font-size: smaller;
+        }
+        td a:hover {
+            text-decoration: underline;
+        }
+        .icon {
+            width: 24px;
+            height: 24px;
+        }
+        .icon-column {
+            width: 40px;  /* Narrow column for icons */
+            text-align: center;
+        }
+        .link-column {
+            width: 50%; /* Give more space to the link column */
+        }
+        .from-column, .at-column {
+            white-space: nowrap; /* Prevent wrapping for From and At columns */
+            font-size: smaller; /* Set font size smaller for From and At columns */
+        }
+        .from-column small, .at-column small {
+            font-size: smaller; /* Ensure smaller font size */
+        }
+        .busy-sign {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            th, td {
+                padding: 8px;
+            }
+            .icon-column {
+                width: 30px;  /* Adjust for smaller screens */
+            }
+        }        
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Share Vault</h2>
+    <a href="https://open.spotify.com/playlist/1cEWvLPxhnMRxPMYNMkaMO?si=9e6878831bdb4847" target="_blank">
+        Sweating Spotify Playlist (auto updated)
+    </a>
+
+    <div class="upload-form">
+        <input type="file" id="fileInput" accept=".txt">
+        <button onclick="processFile()">Process</button>
+    </div>
+
+    <div id="busySign" class="busy-sign" style="display: none;">Loading...</div>
+
+    <div id="stats"></div>
+
+    <table id="linksTable" style="display: none;">
+        <thead>
+            <tr>
+                <th class="icon-column">Icon</th>
+                <th class="link-column">Link</th>
+                <th class="from-column">From</th>
+                <th class="at-column">At</th>
+            </tr>
+        </thead>
+        <tbody id="linksTableBody"></tbody>
+    </table>
+</div>
+
+<script>
+    /*async function processFile() {
+        const fileInput = document.getElementById('fileInput');
+        const busySign = document.getElementById('busySign');
+        const file = fileInput.files[0];
+
+        if (!file) {
+            alert('Please select a file to process');
+            return;
+        }
+
+        busySign.style.display = 'block';
+
+        const reader = new FileReader();
+        reader.onload = async function(event) {
+            const fileContents = event.target.result;
+
+            try {
+                const results = await analyseChatFromText(fileContents);
+                displayStats(results);
+                displayLinks(results);
+            } catch (error) {
+                console.error('Error processing file:', error);
+                alert('Error processing file.');
+            } finally {
+                busySign.style.display = 'none';
+            }
+        };
+
+        reader.readAsText(file);
+    }*/
+
+    async function processFile() {
+        const fileInput = document.getElementById('fileInput');
+        const busySign = document.getElementById('busySign');
+        const file = fileInput.files[0];
+    
+        if (!file) {
+            alert('Please select a file to process');
+            return;
+        }
+    
+        busySign.style.display = 'block';
+    
+        const formData = new FormData();
+        formData.append('file', file);
+    
+        try {
+            const response = await fetch('/analyse', {
+                method: 'POST',
+                body: formData
+            });
+    
+            const data = await response.json();
+            if (data.file_contents) {
+                displayStats(data.file_contents);
+                displayLinks(data.file_contents);
+            } else {
+                alert('No links found in the uploaded file');
+            }
+        } catch (error) {
+            console.error('Error processing file:', error);
+            alert('Error processing file.');
+        } finally {
+            busySign.style.display = 'none';
+        }
+    }    
+
+    async function analyseChatFromText(text) {
+        return await analyseChat(text, { expandSpotify: true, expandYoutube: true, updateSweating: true });
+    }
+
+    function displayStats(file_contents) {
+        var userCount = {};
+        file_contents.forEach(link => {
+            var user = link.user;
+            userCount[user] = (userCount[user] || 0) + 1;
+        });
+
+        var statsHtml = `<span> Total: ${file_contents.length} </span>`;
+        for (const user in userCount) {
+            statsHtml += `<span> ${user}: ${userCount[user]} </span>`;
+        }
+        document.getElementById("stats").innerHTML = statsHtml;
+    }
+
+    function displayLinks(file_contents) {
+        const linksTable = document.getElementById('linksTable');
+        const linksTableBody = document.getElementById('linksTableBody');
+        linksTableBody.innerHTML = '';
+
+        file_contents.forEach(link => {
+            const row = document.createElement('tr');
+
+            const iconCell = document.createElement('td');
+            iconCell.className = 'icon-column';
+            const icon = document.createElement('img');
+            icon.className = 'icon';
+            icon.src = getIconForLink(link.url);
+            iconCell.appendChild(icon);
+            row.appendChild(iconCell);
+
+            var textContent = link.url;
+            if ("type" in link) {
+                if (link.type == "track") {
+                    textContent = link.name + " - " + link.artists;
+                } else if (link.type == "playlist") {
+                    textContent = "[Playlist] " + link.name;
+                } else if (link.type == "artist") {
+                    textContent = "[Artist] " + link.name;
+                } else if (link.type == "album") {
+                    textContent = "[Album] " + link.name + " - " + link.artists;
+                } else if (link.type == "video") {
+                    textContent = "[Video] " + link.name;
+                }
+            }
+
+            const linkCell = document.createElement('td');
+            const anchor = document.createElement('a');
+            anchor.href = link.url;
+            anchor.target = '_blank';
+            anchor.textContent = textContent;
+
+            linkCell.style.wordWrap = 'break-word';
+            linkCell.style.whiteSpace = 'normal';
+
+            if ("image_url" in link) {
+                const thumbnail = document.createElement('img');
+                thumbnail.src = link.image_url;
+                thumbnail.style.display = "block";
+                thumbnail.style.width = "30%";
+                thumbnail.style.height = "20%";
+                linkCell.appendChild(thumbnail);
+                linkCell.appendChild(document.createElement('br'));
+            }
+
+            linkCell.appendChild(anchor);
+            row.appendChild(linkCell);
+
+            const fromCell = document.createElement('td');
+            fromCell.innerHTML = `<small>${link.user}</small>`;
+            row.appendChild(fromCell);
+
+            const atCell = document.createElement('td');
+            atCell.innerHTML = `<small>${link.timestamp}</small>`;
+            row.appendChild(atCell);
+
+            linksTableBody.appendChild(row);
+        });
+
+        linksTable.style.display = 'table';
+    }
+
+    function getIconForLink(link) {
+        if (link.includes('instagram.com')) {
+            return 'https://img.icons8.com/fluent/48/000000/instagram-new.png';
+        } else if (link.includes('spotify.com')) {
+            return 'https://img.icons8.com/fluent/48/000000/spotify.png';
+        } else if (link.includes('youtu')) {
+            return 'https://img.icons8.com/fluent/48/000000/youtube-play.png';
+        } else if (link.includes('maps.google.com')) {
+            return 'https://img.icons8.com/color/48/000000/google-maps.png';
+        } else {
+            return 'https://img.icons8.com/fluent/48/000000/link.png';
+        }
+    }
+</script>
+
+</body>
+</html>
