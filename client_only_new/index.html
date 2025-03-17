@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Links Extractor</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    .sort-asc::after { content: " ↑"; }
+    .sort-desc::after { content: " ↓"; }
+    .hidden { display: none; }
+    .drag-area {
+      border: 2px dashed #ccc;
+      border-radius: 5px;
+      padding: 25px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+    .drag-area.active {
+      border-color: #4299e1;
+      background-color: #ebf8ff;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+  <div class="container mx-auto px-4 py-8">
+    <header class="mb-8 text-center">
+      <h1 class="text-3xl font-bold text-gray-800">Chat Links Extractor</h1>
+      <p class="text-gray-600 mt-2">Upload a chat export to extract and view all shared links</p>
+    </header>
+    
+    <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6 mb-8">
+      <form id="upload-form" class="mb-6">
+        <div id="drag-area" class="drag-area mb-4">
+          <label for="file-upload" class="block mb-2">
+            <span class="text-gray-700 font-medium">Upload Chat Export File</span>
+            <span class="text-sm text-gray-500 block">(WhatsApp, Signal, Telegram)</span>
+          </label>
+          <input id="file-upload" type="file" accept=".txt" class="w-full">
+        </div>
+        
+        <div id="options-form" class="mb-6">
+          <h3 class="text-lg font-medium mb-2">Options</h3>
+          <div class="flex flex-wrap gap-4">
+            <label class="inline-flex items-center">
+              <input type="checkbox" id="expand-spotify" checked class="form-checkbox">
+              <span class="ml-2">Expand Spotify links</span>
+            </label>
+            <label class="inline-flex items-center">
+              <input type="checkbox" id="expand-youtube" checked class="form-checkbox">
+              <span class="ml-2">Expand YouTube links</span>
+            </label>
+            <label class="inline-flex items-center">
+              <input type="checkbox" id="expand-general" checked class="form-checkbox">
+              <span class="ml-2">Expand other links</span>
+            </label>
+          </div>
+        </div>
+        
+        <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 w-full">
+          Process Chat
+        </button>
+      </form>
+      
+      <div id="processing" class="text-center py-4 hidden">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+        <p class="mt-2 text-gray-600">Processing... This may take a moment.</p>
+      </div>
+    </div>
+    
+    <div id="results-container" class="bg-white rounded-lg shadow-md p-6 hidden">
+      <h2 class="text-xl font-bold mb-4">Found Links</h2>
+      <div class="overflow-x-auto">
+        <table id="results-table" class="min-w-full bg-white border-collapse">
+          <thead>
+            <tr class="bg-gray-100">
+              <th data-sort="timestamp" class="p-2 border cursor-pointer text-left">Timestamp</th>
+              <th data-sort="user" class="p-2 border cursor-pointer text-left">User</th>
+              <th data-sort="name" class="p-2 border cursor-pointer text-left">Title</th>
+              <th data-sort="type" class="p-2 border cursor-pointer text-center">Type</th>
+              <th class="p-2 border text-left">URL</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Scripts -->
+  <script src="spotify-helper.js"></script>
+  <script src="youtube-helper.js"></script>
+  <script src="links-helper.js"></script>
+  <script src="main-app.js"></script>
+</body>
+</html>
