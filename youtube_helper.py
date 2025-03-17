@@ -25,7 +25,7 @@ def _get_youtube_video_title(video_id):
     if response.status_code == 200:
         video_info = response.json()
         if len(video_info["items"]) == 0:
-            print(f"Could not find title for {video_url}, Response: {video_info}")
+            print(f"Could not find title for {video_id}, Response: {video_info}")
             return None
         title = video_info["items"][0]["snippet"]["title"]
         return title
